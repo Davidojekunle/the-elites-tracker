@@ -5,3 +5,4 @@ pdfplumber
 python-multipart
 pdf2image
 pytesseract
+psycopg2-binary
