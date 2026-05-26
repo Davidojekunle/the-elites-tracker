@@ -1,0 +1,1266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CS 2025 · Academic Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #f5f4f0;
+      --surface: #ffffff;
+      --surface-2: #f0ede8;
+      --border: #e2ddd6;
+      --text: #1a1714;
+      --text-2: #6b6560;
+      --text-3: #9c968f;
+      --accent: #2d6a4f;
+      --accent-light: #e8f5ee;
+      --accent-2: #e07c39;
+      --accent-2-light: #fef3eb;
+      --accent-3: #3a6186;
+      --accent-3-light: #e8f0f7;
+      --gold: #c9a84c;
+      --gold-light: #fdf6e3;
+      --danger: #c0392b;
+      --danger-light: #fdecea;
+      --radius: 12px;
+      --radius-lg: 20px;
+      --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+      --shadow-md: 0 2px 8px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.06);
+    }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    h1, h2, h3, h4, h5 { font-family: 'Syne', sans-serif; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+    /* ── Layout ── */
+    .app { display: flex; min-height: 100vh; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 220px;
+      min-width: 220px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      padding: 24px 0;
+    }
+    .sidebar-logo {
+      padding: 0 20px 24px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 16px;
+    }
+    .sidebar-logo .dept { font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 800; color: var(--text); letter-spacing: -0.3px; }
+    .sidebar-logo .sub { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+    .badge-100 {
+      display: inline-flex; align-items: center; gap: 4px;
+      background: var(--accent-light); color: var(--accent);
+      font-size: 10px; font-weight: 600; font-family: 'Syne', sans-serif;
+      padding: 3px 8px; border-radius: 99px; margin-top: 6px;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      border-radius: 0;
+      color: var(--text-2);
+      font-size: 13.5px;
+      font-weight: 400;
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+      text-decoration: none;
+      user-select: none;
+    }
+    .nav-item:hover { background: var(--surface-2); color: var(--text); }
+    .nav-item.active {
+      color: var(--accent);
+      background: var(--accent-light);
+      border-left-color: var(--accent);
+      font-weight: 500;
+    }
+    .nav-icon { font-size: 16px; min-width: 20px; text-align: center; }
+    .nav-section { padding: 16px 20px 6px; font-size: 10px; font-weight: 700; letter-spacing: 1px; color: var(--text-3); font-family: 'Syne', sans-serif; text-transform: uppercase; }
+
+    .sidebar-bottom {
+      margin-top: auto;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+    }
+    .data-pill {
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      padding: 12px;
+      font-size: 12px;
+      color: var(--text-2);
+    }
+    .data-pill strong { display: block; font-family: 'Syne', sans-serif; font-size: 18px; color: var(--text); font-weight: 700; }
+
+    /* ── Main ── */
+    .main { margin-left: 220px; flex: 1; padding: 32px; min-height: 100vh; }
+
+    /* ── Page header ── */
+    .page-header { margin-bottom: 28px; }
+    .page-header h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; color: var(--text); }
+    .page-header p { color: var(--text-2); margin-top: 4px; font-size: 14px; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow);
+    }
+    .card-pad { padding: 24px; }
+
+    /* ── Grid ── */
+    .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+    /* ── Stat cards ── */
+    .stat-card { padding: 20px; }
+    .stat-label { font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; color: var(--text-3); font-family: 'Syne', sans-serif; }
+    .stat-value { font-family: 'Syne', sans-serif; font-size: 32px; font-weight: 800; letter-spacing: -1px; margin: 6px 0 2px; color: var(--text); }
+    .stat-sub { font-size: 12px; color: var(--text-2); }
+    .stat-icon { font-size: 28px; margin-bottom: 8px; }
+
+    /* ── Top performers ── */
+    .top-card {
+      padding: 18px 20px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .top-badge {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px; flex-shrink: 0;
+    }
+    .top-badge.gold { background: var(--gold-light); }
+    .top-badge.green { background: var(--accent-light); }
+    .top-badge.blue { background: var(--accent-3-light); }
+    .top-name { font-weight: 600; font-size: 13px; color: var(--text); line-height: 1.2; }
+    .top-meta { font-size: 11px; color: var(--text-2); margin-top: 3px; }
+    .top-val { margin-left: auto; text-align: right; }
+    .top-val .val { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 16px; color: var(--text); }
+    .top-val .lbl { font-size: 10px; color: var(--text-3); }
+
+    /* ── Leaderboard table ── */
+    .table-wrap { overflow-x: auto; }
+    .lb-table { width: 100%; border-collapse: collapse; }
+    .lb-table th {
+      text-align: left; padding: 10px 16px;
+      font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+      text-transform: uppercase; color: var(--text-3);
+      font-family: 'Syne', sans-serif;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky; top: 0;
+      white-space: nowrap;
+    }
+    .lb-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .lb-table tr:last-child td { border-bottom: none; }
+    .lb-table tr:hover td { background: var(--surface-2); cursor: pointer; }
+    .lb-table tr.highlight td { background: var(--gold-light); }
+
+    .rank-badge {
+      width: 28px; height: 28px; border-radius: 50%;
+      display: inline-flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 12px;
+    }
+    .rank-1 { background: var(--gold); color: #fff; }
+    .rank-2 { background: #b0b8c1; color: #fff; }
+    .rank-3 { background: #c9956a; color: #fff; }
+    .rank-n { background: var(--surface-2); color: var(--text-2); }
+
+    .student-name { font-weight: 500; color: var(--text); font-size: 13.5px; }
+    .student-matric { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+
+    .cgpa-pill {
+      display: inline-flex; align-items: center;
+      font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px;
+      padding: 4px 10px; border-radius: 99px;
+    }
+    .cgpa-first { background: var(--accent-light); color: var(--accent); }
+    .cgpa-second { background: var(--accent-3-light); color: var(--accent-3); }
+    .cgpa-third { background: var(--accent-2-light); color: var(--accent-2); }
+    .cgpa-pass { background: var(--surface-2); color: var(--text-2); }
+    .cgpa-risk { background: var(--danger-light); color: var(--danger); }
+
+    .grade-chip {
+      display: inline-block; padding: 2px 8px; border-radius: 6px;
+      font-size: 11px; font-weight: 600; font-family: 'Syne', sans-serif;
+    }
+    .grade-A { background: var(--accent-light); color: var(--accent); }
+    .grade-B { background: var(--accent-3-light); color: var(--accent-3); }
+    .grade-C { background: var(--accent-2-light); color: var(--accent-2); }
+    .grade-D { background: #fef9e7; color: #b7950b; }
+    .grade-E { background: #fdecea; color: #c0392b; }
+    .grade-F { background: var(--danger-light); color: var(--danger); }
+
+    /* ── Filters bar ── */
+    .filters-bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .search-input {
+      flex: 1; min-width: 200px;
+      padding: 8px 14px 8px 36px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    .search-input:focus { border-color: var(--accent); background: var(--surface); }
+    .search-wrap { position: relative; flex: 1; min-width: 200px; }
+    .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-3); font-size: 14px; pointer-events: none; }
+
+    .filter-select {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      color: var(--text);
+      outline: none;
+      cursor: pointer;
+    }
+    .filter-select:focus { border-color: var(--accent); }
+
+    .filter-count {
+      font-size: 12px; color: var(--text-3); white-space: nowrap;
+      margin-left: auto;
+    }
+
+    /* ── Section title ── */
+    .section-title {
+      font-family: 'Syne', sans-serif; font-size: 16px; font-weight: 700;
+      color: var(--text); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-title .pill {
+      font-size: 10px; font-weight: 600; padding: 3px 8px;
+      background: var(--surface-2); color: var(--text-3);
+      border-radius: 99px; letter-spacing: 0.5px;
+    }
+
+    /* ── Charts ── */
+    .chart-container { position: relative; height: 220px; }
+    .chart-container-lg { position: relative; height: 300px; }
+
+    /* ── Analytics cards ── */
+    .insight-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .insight-row:last-child { border-bottom: none; }
+    .insight-label { font-size: 13px; color: var(--text); }
+    .insight-sub { font-size: 11px; color: var(--text-3); }
+    .insight-val { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; }
+    .insight-bar-wrap { height: 6px; background: var(--surface-2); border-radius: 99px; margin-top: 4px; overflow: hidden; }
+    .insight-bar { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.8s ease; }
+
+    /* ── Student profile ── */
+    .profile-header {
+      padding: 28px; display: flex; align-items: flex-start; gap: 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .profile-avatar {
+      width: 64px; height: 64px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent) 0%, var(--accent-3) 100%);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px;
+      color: #fff; flex-shrink: 0;
+    }
+    .profile-name { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+    .profile-meta { display: flex; gap: 16px; margin-top: 8px; flex-wrap: wrap; }
+    .profile-meta-item { font-size: 12px; color: var(--text-2); display: flex; align-items: center; gap: 5px; }
+    .profile-stats { display: flex; gap: 24px; margin-top: 14px; }
+    .profile-stat { text-align: center; }
+    .profile-stat .val { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 22px; letter-spacing: -0.5px; }
+    .profile-stat .lbl { font-size: 10px; color: var(--text-3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-top: 2px; }
+
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--text-2); cursor: pointer;
+      margin-bottom: 20px; padding: 6px 0;
+      transition: color 0.15s; background: none; border: none; font-family: 'DM Sans', sans-serif;
+    }
+    .back-btn:hover { color: var(--accent); }
+
+    /* ── Loading & empty ── */
+    .loading-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; gap: 12px; }
+    .spinner { width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .empty { color: var(--text-3); font-size: 14px; }
+
+    /* ── Error ── */
+    .error-banner {
+      background: var(--danger-light); border: 1px solid #f5c6c2;
+      border-radius: var(--radius); padding: 14px 18px;
+      color: var(--danger); font-size: 13px; margin-bottom: 20px;
+    }
+
+    /* ── At-risk tag ── */
+    .at-risk-tag {
+      font-size: 10px; font-weight: 600; padding: 2px 7px;
+      background: var(--danger-light); color: var(--danger);
+      border-radius: 99px; font-family: 'Syne', sans-serif;
+    }
+
+    /* ── Tabs ── */
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 24px; }
+    .tab {
+      padding: 10px 20px; font-size: 13px; font-weight: 500;
+      cursor: pointer; border-bottom: 2px solid transparent;
+      color: var(--text-2); transition: all 0.15s;
+      font-family: 'DM Sans', sans-serif; background: none; border-top: none; border-left: none; border-right: none;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+    /* ── Compare ── */
+    .compare-row { display: grid; grid-template-columns: 1fr auto 1fr; gap: 20px; align-items: center; }
+    .compare-vs { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 20px; color: var(--text-3); text-align: center; }
+
+    /* ── Course leaderboard ── */
+    .course-lb-item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .course-lb-item:last-child { border-bottom: none; }
+    .course-rank-num { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 13px; color: var(--text-3); min-width: 24px; }
+    .course-lb-name { flex: 1; font-size: 13px; font-weight: 500; }
+    .course-lb-score { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 14px; color: var(--text); }
+
+    /* ── Responsive ── */
+    @media (max-width: 1100px) {
+      .grid-4 { grid-template-columns: repeat(2, 1fr); }
+    }
+    @media (max-width: 800px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 16px; }
+      .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* ── Animations ── */
+    .fade-in { animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .divider { height: 1px; background: var(--border); margin: 20px 0; }
+
+    /* GPA class tags */
+    .class-first { color: var(--accent); font-weight: 600; }
+    .class-second { color: var(--accent-3); font-weight: 600; }
+    .class-third { color: var(--accent-2); font-weight: 600; }
+    .class-pass { color: var(--text-2); }
+    .class-fail { color: var(--danger); font-weight: 600; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+// ─── Config ─────────────────────────────────────────────────────────────
+// When running locally (python -m uvicorn app.main:app --reload), set:
+// const API = 'http://localhost:8000';
+// When served by FastAPI (production), leave as empty string:
+const API = 'http://localhost:8000';
+
+// ─── Helpers ─────────────────────────────────────────────────────────────
+const cgpaClass = (cgpa) => {
+  if (cgpa >= 4.5) return 'first';
+  if (cgpa >= 3.5) return 'second';
+  if (cgpa >= 2.5) return 'third';
+  if (cgpa >= 1.5) return 'pass';
+  return 'fail';
+};
+
+const cgpaPillClass = (cgpa) => {
+  const c = cgpaClass(cgpa);
+  return { first: 'cgpa-first', second: 'cgpa-second', third: 'cgpa-third', pass: 'cgpa-pass', fail: 'cgpa-risk' }[c];
+};
+
+const cgpaLabel = (cgpa) => {
+  if (cgpa >= 4.5) return 'First Class';
+  if (cgpa >= 3.5) return '2nd Class Upper';
+  if (cgpa >= 2.5) return '2nd Class Lower';
+  if (cgpa >= 1.5) return 'Third Class';
+  return 'Fail';
+};
+
+const gradeChip = (grade) => {
+  if (!grade) return null;
+  const g = grade.toUpperCase();
+  return <span className={`grade-chip grade-${g}`}>{g}</span>;
+};
+
+const initials = (name) => {
+  if (!name) return '?';
+  const parts = name.trim().split(' ');
+  return parts.length >= 2 ? parts[0][0] + parts[1][0] : parts[0][0];
+};
+
+const fmt = (n, d = 2) => (n !== null && n !== undefined) ? Number(n).toFixed(d) : '—';
+
+// ─── API calls ──────────────────────────────────────────────────────────
+async function apiFetch(path, opts) {
+  const res = await fetch(API + path, opts);
+  if (!res.ok) throw new Error(`API error ${res.status}`);
+  return res.json();
+}
+
+// Fetch leaderboard — unwraps .leaderboard array, normalises courses_sat → courses_taken
+async function fetchLeaderboard(session = '2025/2026', level = 100) {
+  const data = await apiFetch(`/leaderboard?session=${encodeURIComponent(session)}&level=${level}`);
+  return (data.leaderboard || []).map(s => ({
+    ...s,
+    courses_taken: s.courses_sat ?? s.courses_taken ?? (s.results || []).length,
+  }));
+}
+
+// Build course-level analytics client-side from the leaderboard data (avoids a missing endpoint)
+function buildCourseStats(leaderboard) {
+  const map = {};
+  (leaderboard || []).forEach(student => {
+    (student.results || []).forEach(r => {
+      if (!map[r.course_code]) {
+        map[r.course_code] = {
+          code: r.course_code, title: r.course_title || '', credit_units: r.credit_units || 0,
+          semester: r.semester || 1, sum: 0, count: 0, pass: 0,
+        };
+      }
+      const e = map[r.course_code];
+      if (r.total_score !== null && r.total_score !== undefined) {
+        e.sum += r.total_score; e.count++;
+        if (r.total_score >= 40) e.pass++;
+      } else if (r.grade_point !== null && r.grade_point !== undefined) {
+        e.count++;
+        if (r.grade_point > 0) e.pass++;
+      }
+    });
+  });
+  return Object.values(map).map(e => ({
+    code: e.code, title: e.title, credit_units: e.credit_units, semester: e.semester,
+    avg_total: e.count > 0 ? e.sum / e.count : null,
+    pass_count: e.pass, total_students: e.count,
+  })).sort((a, b) => a.semester - b.semester || a.code.localeCompare(b.code));
+}
+
+// Build per-course leaderboard client-side from full leaderboard data
+function buildCourseLb(leaderboard, courseCode) {
+  const rows = [];
+  (leaderboard || []).forEach(student => {
+    const r = (student.results || []).find(x => x.course_code === courseCode);
+    if (r) rows.push({ matric_no: student.matric_no, name: student.name, total_score: r.total_score, grade: r.grade, grade_point: r.grade_point });
+  });
+  return rows.sort((a, b) => ((b.grade_point ?? 0) - (a.grade_point ?? 0)) || ((b.total_score ?? 0) - (a.total_score ?? 0)));
+}
+
+// ─── Chart hook ─────────────────────────────────────────────────────────
+function useChart(ref, config, deps) {
+  useEffect(() => {
+    if (!ref.current) return;
+    const ctx = ref.current.getContext('2d');
+    const chart = new Chart(ctx, config);
+    return () => chart.destroy();
+  }, deps);
+}
+
+// ─── Components ─────────────────────────────────────────────────────────
+
+function Spinner() {
+  return <div className="loading-wrap"><div className="spinner"></div><span className="empty">Loading…</span></div>;
+}
+
+function RankBadge({ rank }) {
+  const cls = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-n';
+  return <span className={`rank-badge ${cls}`}>{rank}</span>;
+}
+
+// ── GPA Distribution Chart ──
+function GpaDistChart({ data }) {
+  const ref = useRef();
+  const labels = ['< 1.5', '1.5–2.49', '2.5–3.49', '3.5–4.49', '4.5–5.0'];
+  const colors = ['#c0392b','#e07c39','#3a6186','#2d6a4f','#c9a84c'];
+  const counts = [0,0,0,0,0];
+  (data || []).forEach(s => {
+    const c = parseFloat(s.cgpa);
+    if (c < 1.5) counts[0]++;
+    else if (c < 2.5) counts[1]++;
+    else if (c < 3.5) counts[2]++;
+    else if (c < 4.5) counts[3]++;
+    else counts[4]++;
+  });
+  useChart(ref, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{ data: counts, backgroundColor: colors, borderRadius: 8, borderSkipped: false }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#e2ddd6' }, ticks: { font: { family: 'Syne' }, stepSize: 1 } },
+        x: { grid: { display: false }, ticks: { font: { family: 'DM Sans', size: 11 } } }
+      }
+    }
+  }, [JSON.stringify(counts)]);
+  return <div className="chart-container"><canvas ref={ref}></canvas></div>;
+}
+
+// ── Course Avg Chart ──
+function CourseAvgChart({ data }) {
+  const ref = useRef();
+  const labels = (data||[]).map(c => c.code);
+  const avgs = (data||[]).map(c => parseFloat(c.avg_total || 0));
+  useChart(ref, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        data: avgs,
+        backgroundColor: avgs.map(v => v >= 60 ? '#2d6a4f' : v >= 45 ? '#3a6186' : '#c0392b'),
+        borderRadius: 6, borderSkipped: false
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, max: 100, grid: { color: '#e2ddd6' }, ticks: { font: { family: 'DM Sans', size: 11 } } },
+        y: { grid: { display: false }, ticks: { font: { family: 'Syne', size: 11 } } }
+      }
+    }
+  }, [JSON.stringify(avgs)]);
+  return <div className="chart-container-lg"><canvas ref={ref}></canvas></div>;
+}
+
+// ── Student Score Chart ──
+function StudentScoreChart({ results }) {
+  const ref = useRef();
+  const labels = (results||[]).map(r => r.course_code);
+  const ca = (results||[]).map(r => r.ca_score);
+  const exam = (results||[]).map(r => r.exam_score);
+  useChart(ref, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'CA', data: ca, backgroundColor: '#2d6a4f', borderRadius: 4, stack: 's' },
+        { label: 'Exam', data: exam, backgroundColor: '#c9a84c', borderRadius: 4, stack: 's' }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'top', labels: { font: { family: 'DM Sans', size: 12 }, boxWidth: 12 } } },
+      scales: {
+        y: { beginAtZero: true, max: 100, grid: { color: '#e2ddd6' }, ticks: { font: { family: 'DM Sans', size: 11 } } },
+        x: { grid: { display: false }, ticks: { font: { family: 'Syne', size: 11 } } }
+      }
+    }
+  }, [JSON.stringify(results)]);
+  return <div className="chart-container-lg"><canvas ref={ref}></canvas></div>;
+}
+
+// ── Grade Pie Chart ──
+function GradePieChart({ results }) {
+  const ref = useRef();
+  const counts = { A:0, B:0, C:0, D:0, E:0, F:0 };
+  (results||[]).forEach(r => { if (r.grade && counts[r.grade.toUpperCase()] !== undefined) counts[r.grade.toUpperCase()]++; });
+  const labels = Object.keys(counts).filter(k => counts[k] > 0);
+  const vals = labels.map(k => counts[k]);
+  const colors = { A:'#2d6a4f', B:'#3a6186', C:'#e07c39', D:'#b7950b', E:'#c0392b', F:'#922b21' };
+  useChart(ref, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: vals, backgroundColor: labels.map(l => colors[l]), borderWidth: 2, borderColor: '#fff' }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '65%',
+      plugins: { legend: { position: 'right', labels: { font: { family: 'DM Sans', size: 12 }, boxWidth: 12 } } }
+    }
+  }, [JSON.stringify(results)]);
+  return <div className="chart-container"><canvas ref={ref}></canvas></div>;
+}
+
+// ─── Student Profile Page ─────────────────────────────────────────────────
+function StudentProfile({ matric, onBack, leaderboard }) {
+  const [profile, setProfile] = useState(null);
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    // main.py: GET /student/{matric_no} returns { matric_no, name, cgpa, results: [...] }
+    apiFetch(`/student/${matric}`)
+      .then(data => {
+        setProfile(data);
+        setResults(data.results || []);
+        setLoading(false);
+      })
+      .catch(e => { setError(e.message); setLoading(false); });
+  }, [matric]);
+
+  if (loading) return <div className="main"><Spinner /></div>;
+  if (error) return <div className="main"><div className="error-banner">⚠ {error}</div></div>;
+
+  const student = leaderboard?.find(s => s.matric_no === matric);
+  const rank = student?.rank;
+  const cgpa = parseFloat(profile?.cgpa || 0);
+  const totalUnits = results.reduce((a, r) => a + (r.credit_units || 0), 0);
+
+  const sem1 = results.filter(r => r.semester === 1);
+  const sem2 = results.filter(r => r.semester === 2);
+
+  const semGPA = (sem) => {
+    const valid = sem.filter(r => r.grade_point !== null && r.credit_units);
+    if (!valid.length) return null;
+    const wp = valid.reduce((a, r) => a + r.grade_point * r.credit_units, 0);
+    const tu = valid.reduce((a, r) => a + r.credit_units, 0);
+    return tu > 0 ? wp / tu : null;
+  };
+  const gpa1 = semGPA(sem1);
+  const gpa2 = semGPA(sem2);
+
+  return (
+    <div className="main fade-in">
+      <button className="back-btn" onClick={onBack}>← Back to leaderboard</button>
+
+      <div className="card" style={{ marginBottom: 24 }}>
+        <div className="profile-header">
+          <div className="profile-avatar">{initials(profile?.name)}</div>
+          <div style={{ flex: 1 }}>
+            <div className="profile-name">{profile?.name || matric}</div>
+            <div className="profile-meta">
+              <span className="profile-meta-item">🎓 {matric}</span>
+              <span className="profile-meta-item">💻 {profile?.department || 'Computer Science'}</span>
+              {rank && <span className="profile-meta-item">🏆 Rank #{rank}</span>}
+              <span className={`profile-meta-item class-${cgpaClass(cgpa)}`}>{cgpaLabel(cgpa)}</span>
+            </div>
+            <div className="profile-stats">
+              <div className="profile-stat">
+                <div className={`val class-${cgpaClass(cgpa)}`}>{fmt(cgpa)}</div>
+                <div className="lbl">CGPA</div>
+              </div>
+              {gpa1 !== null && <div className="profile-stat">
+                <div className="val">{fmt(gpa1)}</div>
+                <div className="lbl">Sem 1 GPA</div>
+              </div>}
+              {gpa2 !== null && <div className="profile-stat">
+                <div className="val">{fmt(gpa2)}</div>
+                <div className="lbl">Sem 2 GPA</div>
+              </div>}
+              <div className="profile-stat">
+                <div className="val">{totalUnits}</div>
+                <div className="lbl">Total Units</div>
+              </div>
+              <div className="profile-stat">
+                <div className="val">{results.length}</div>
+                <div className="lbl">Courses</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ padding: '24px', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+          <div>
+            <div className="section-title" style={{ marginBottom: 12 }}>Scores by Course</div>
+            <StudentScoreChart results={results.filter(r => r.ca_score !== null)} />
+          </div>
+          <div>
+            <div className="section-title" style={{ marginBottom: 12 }}>Grade Distribution</div>
+            <GradePieChart results={results} />
+          </div>
+        </div>
+      </div>
+
+      {[{ label: '1st Semester', sem: sem1 }, { label: '2nd Semester', sem: sem2 }].filter(x => x.sem.length > 0).map(({ label, sem }) => (
+        <div className="card" style={{ marginBottom: 20 }} key={label}>
+          <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div className="section-title" style={{ margin: 0 }}>{label}</div>
+            {semGPA(sem) !== null && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 12, color: 'var(--text-3)' }}>GPA</span>
+                <span className={`cgpa-pill ${cgpaPillClass(semGPA(sem))}`}>{fmt(semGPA(sem))}</span>
+              </div>
+            )}
+          </div>
+          <div className="table-wrap">
+            <table className="lb-table">
+              <thead>
+                <tr>
+                  <th>Course</th>
+                  <th>Title</th>
+                  <th>Units</th>
+                  <th>CA</th>
+                  <th>Exam</th>
+                  <th>Total</th>
+                  <th>Grade</th>
+                  <th>Points</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sem.map(r => (
+                  <tr key={r.course_code}>
+                    <td><span style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 13 }}>{r.course_code}</span></td>
+                    <td style={{ fontSize: 12, color: 'var(--text-2)', maxWidth: 180 }}>{r.course_title}</td>
+                    <td style={{ color: 'var(--text-3)', fontSize: 12 }}>{r.credit_units}</td>
+                    <td>{r.ca_score !== null ? r.ca_score : <span style={{color:'var(--text-3)'}}>—</span>}</td>
+                    <td>{r.exam_score !== null ? r.exam_score : <span style={{color:'var(--text-3)'}}>—</span>}</td>
+                    <td><strong>{r.total_score !== null ? r.total_score : <span style={{color:'var(--text-3)'}}>—</span>}</strong></td>
+                    <td>{gradeChip(r.grade)}</td>
+                    <td style={{ fontFamily: 'Syne', fontWeight: 700 }}>{r.grade_point !== null ? fmt(r.grade_point, 1) : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Leaderboard Page ─────────────────────────────────────────────────────
+function LeaderboardPage({ leaderboard, loading, error, onSelect }) {
+  const [search, setSearch] = useState('');
+  const [filterSem, setFilterSem] = useState('all');
+  const [filterClass, setFilterClass] = useState('all');
+  const [sortBy, setSortBy] = useState('rank');
+
+  const filtered = useMemo(() => {
+    let data = leaderboard || [];
+    if (search) {
+      const q = search.toLowerCase();
+      data = data.filter(s =>
+        s.name?.toLowerCase().includes(q) ||
+        s.matric_no?.toLowerCase().includes(q)
+      );
+    }
+    if (filterClass !== 'all') {
+      data = data.filter(s => cgpaClass(parseFloat(s.cgpa)) === filterClass);
+    }
+    return data;
+  }, [leaderboard, search, filterClass]);
+
+  const top3 = (leaderboard || []).slice(0, 3);
+  const best = top3[0];
+  const atRisk = (leaderboard || []).filter(s => parseFloat(s.cgpa) < 2.0).length;
+  const avg = leaderboard?.length ? (leaderboard.reduce((a, s) => a + parseFloat(s.cgpa), 0) / leaderboard.length) : 0;
+  const firstClass = (leaderboard || []).filter(s => parseFloat(s.cgpa) >= 4.5).length;
+
+  return (
+    <div className="main fade-in">
+      <div className="page-header">
+        <h1>Leaderboard</h1>
+        <p>CS 2025/2026 · 100 Level · All Courses Cumulative</p>
+      </div>
+
+      {error && <div className="error-banner">⚠ Could not reach the API: {error}. Showing demo data.</div>}
+
+      {/* Stat cards */}
+      <div className="grid-4">
+        {[
+          { icon: '🎓', label: 'Total Students', value: leaderboard?.length || 0, sub: '25190 cohort' },
+          { icon: '📊', label: 'Avg CGPA', value: fmt(avg), sub: cgpaLabel(avg) },
+          { icon: '🥇', label: 'First Class', value: firstClass, sub: `${leaderboard?.length ? ((firstClass/leaderboard.length)*100).toFixed(0) : 0}% of cohort` },
+          { icon: '⚠️', label: 'At-Risk (<2.0)', value: atRisk, sub: 'Need attention' },
+        ].map(s => (
+          <div className="card stat-card" key={s.label}>
+            <div className="stat-icon">{s.icon}</div>
+            <div className="stat-label">{s.label}</div>
+            <div className="stat-value">{loading ? '…' : s.value}</div>
+            <div className="stat-sub">{s.sub}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Top performers */}
+      <div className="section-title">🔥 Top Performers</div>
+      <div className="grid-3" style={{ marginBottom: 28 }}>
+        {[
+          { badge: '🥇', cls: 'gold', student: top3[0], label: 'Best CGPA', valKey: 'cgpa', valFmt: (v) => fmt(v) },
+          { badge: '📈', cls: 'green', student: top3[1], label: '#2 Ranked', valKey: 'cgpa', valFmt: (v) => fmt(v) },
+          { badge: '💪', cls: 'blue', student: top3[2], label: '#3 Ranked', valKey: 'cgpa', valFmt: (v) => fmt(v) },
+        ].map((item, i) => (
+          <div className="card top-card" key={i} style={{ cursor: item.student ? 'pointer' : 'default' }} onClick={() => item.student && onSelect(item.student.matric_no)}>
+            <div className={`top-badge ${item.cls}`}>{item.badge}</div>
+            <div>
+              <div className="top-name">{loading ? '…' : (item.student?.name || '—')}</div>
+              <div className="top-meta">{item.label} · {item.student?.matric_no}</div>
+            </div>
+            <div className="top-val">
+              <div className="val">{loading ? '…' : (item.student ? item.valFmt(item.student[item.valKey]) : '—')}</div>
+              <div className="lbl">CGPA</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Main table */}
+      <div className="card">
+        <div className="filters-bar">
+          <div className="search-wrap">
+            <span className="search-icon">🔍</span>
+            <input className="search-input" placeholder="Search by name or matric…" value={search} onChange={e => setSearch(e.target.value)} />
+          </div>
+          <select className="filter-select" value={filterClass} onChange={e => setFilterClass(e.target.value)}>
+            <option value="all">All Classes</option>
+            <option value="first">First Class (≥4.5)</option>
+            <option value="second">2nd Upper (3.5–4.49)</option>
+            <option value="third">2nd Lower (2.5–3.49)</option>
+            <option value="pass">Third Class (1.5–2.49)</option>
+            <option value="fail">At Risk (&lt;1.5)</option>
+          </select>
+          <span className="filter-count">{filtered.length} students</span>
+        </div>
+        <div className="table-wrap">
+          {loading ? <Spinner /> : (
+            <table className="lb-table">
+              <thead>
+                <tr>
+                  <th>Rank</th>
+                  <th>Student</th>
+                  <th>CGPA</th>
+                  <th>Class</th>
+                  <th>Courses</th>
+                  <th>Total Units</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 ? (
+                  <tr><td colSpan={6} style={{ textAlign: 'center', padding: 40, color: 'var(--text-3)' }}>No students found</td></tr>
+                ) : filtered.map(s => {
+                  const cgpa = parseFloat(s.cgpa);
+                  return (
+                    <tr key={s.matric_no} className={s.rank <= 3 ? 'highlight' : ''} onClick={() => onSelect(s.matric_no)} style={{ cursor: 'pointer' }}>
+                      <td><RankBadge rank={s.rank} /></td>
+                      <td>
+                        <div className="student-name">{s.name}</div>
+                        <div className="student-matric">{s.matric_no}</div>
+                      </td>
+                      <td><span className={`cgpa-pill ${cgpaPillClass(cgpa)}`}>{fmt(cgpa)}</span></td>
+                      <td>
+                        <span className={`class-${cgpaClass(cgpa)}`}>{cgpaLabel(cgpa)}</span>
+                        {cgpa < 2.0 && <span className="at-risk-tag" style={{ marginLeft: 6 }}>At Risk</span>}
+                      </td>
+                      <td style={{ color: 'var(--text-2)', fontSize: 13 }}>{s.courses_taken || '—'}</td>
+                      <td style={{ color: 'var(--text-2)', fontSize: 13 }}>{s.total_units || '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Analytics Page ───────────────────────────────────────────────────────
+function AnalyticsPage({ leaderboard, loading, courseStats }) {
+  const [activeTab, setActiveTab] = useState('overview');
+
+  const hardest = (courseStats || []).slice().sort((a,b) => parseFloat(a.avg_total||0) - parseFloat(b.avg_total||0)).slice(0,3);
+  const easiest = (courseStats || []).slice().sort((a,b) => parseFloat(b.avg_total||0) - parseFloat(a.avg_total||0)).slice(0,3);
+
+  const passRate = (course) => {
+    if (!course.pass_count || !course.total_students) return 0;
+    return ((course.pass_count / course.total_students) * 100).toFixed(0);
+  };
+
+  return (
+    <div className="main fade-in">
+      <div className="page-header">
+        <h1>Analytics</h1>
+        <p>Cohort-level insights and performance breakdown</p>
+      </div>
+
+      <div className="tabs">
+        {['overview','courses','distribution'].map(t => (
+          <button key={t} className={`tab${activeTab===t?' active':''}`} onClick={() => setActiveTab(t)}>
+            {t === 'overview' ? '📊 Overview' : t === 'courses' ? '📚 Courses' : '📈 Distribution'}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'overview' && (
+        <>
+          <div className="grid-2">
+            <div className="card card-pad">
+              <div className="section-title">GPA Distribution</div>
+              {loading ? <Spinner /> : <GpaDistChart data={leaderboard} />}
+            </div>
+            <div className="card card-pad">
+              <div className="section-title">Class Breakdown</div>
+              {loading ? <Spinner /> : (
+                <div>
+                  {[
+                    { label: 'First Class', range: '≥ 4.5', cls: 'first', filter: s => parseFloat(s.cgpa) >= 4.5 },
+                    { label: '2nd Class Upper', range: '3.5 – 4.49', cls: 'second', filter: s => parseFloat(s.cgpa) >= 3.5 && parseFloat(s.cgpa) < 4.5 },
+                    { label: '2nd Class Lower', range: '2.5 – 3.49', cls: 'third', filter: s => parseFloat(s.cgpa) >= 2.5 && parseFloat(s.cgpa) < 3.5 },
+                    { label: 'Third Class', range: '1.5 – 2.49', cls: 'pass', filter: s => parseFloat(s.cgpa) >= 1.5 && parseFloat(s.cgpa) < 2.5 },
+                    { label: 'At Risk / Fail', range: '< 1.5', cls: 'fail', filter: s => parseFloat(s.cgpa) < 1.5 },
+                  ].map(row => {
+                    const count = (leaderboard||[]).filter(row.filter).length;
+                    const pct = leaderboard?.length ? (count / leaderboard.length * 100) : 0;
+                    return (
+                      <div className="insight-row" key={row.label}>
+                        <div>
+                          <div className="insight-label"><span className={`class-${row.cls}`}>{row.label}</span></div>
+                          <div className="insight-sub">{row.range}</div>
+                          <div className="insight-bar-wrap" style={{ width: 160, marginTop: 6 }}>
+                            <div className="insight-bar" style={{ width: `${pct}%`, background: { first:'#2d6a4f',second:'#3a6186',third:'#e07c39',pass:'#9c968f',fail:'#c0392b' }[row.cls] }}></div>
+                          </div>
+                        </div>
+                        <div>
+                          <div className="insight-val">{count}</div>
+                          <div className="insight-sub">{pct.toFixed(0)}%</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="grid-2">
+            <div className="card card-pad">
+              <div className="section-title">🔥 Hardest Courses <span className="pill">Lowest avg score</span></div>
+              {(hardest||[]).map((c, i) => (
+                <div className="insight-row" key={c.code}>
+                  <div>
+                    <div className="insight-label" style={{ fontFamily: 'Syne', fontWeight: 700 }}>{c.code}</div>
+                    <div className="insight-sub">{c.title}</div>
+                  </div>
+                  <div className="insight-val" style={{ color: 'var(--danger)' }}>{fmt(c.avg_total, 1)}%</div>
+                </div>
+              ))}
+            </div>
+            <div className="card card-pad">
+              <div className="section-title">✅ Easiest Courses <span className="pill">Highest avg score</span></div>
+              {(easiest||[]).map((c, i) => (
+                <div className="insight-row" key={c.code}>
+                  <div>
+                    <div className="insight-label" style={{ fontFamily: 'Syne', fontWeight: 700 }}>{c.code}</div>
+                    <div className="insight-sub">{c.title}</div>
+                  </div>
+                  <div className="insight-val" style={{ color: 'var(--accent)' }}>{fmt(c.avg_total, 1)}%</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Top 10% */}
+          <div className="card card-pad" style={{ marginBottom: 24 }}>
+            <div className="section-title">🌟 Top 10% Students</div>
+            <div className="table-wrap">
+              <table className="lb-table">
+                <thead><tr><th>Rank</th><th>Student</th><th>CGPA</th><th>Class</th></tr></thead>
+                <tbody>
+                  {(leaderboard||[]).slice(0, Math.max(1, Math.ceil((leaderboard?.length||0)*0.1))).map(s => (
+                    <tr key={s.matric_no}>
+                      <td><RankBadge rank={s.rank} /></td>
+                      <td><div className="student-name">{s.name}</div><div className="student-matric">{s.matric_no}</div></td>
+                      <td><span className={`cgpa-pill ${cgpaPillClass(parseFloat(s.cgpa))}`}>{fmt(s.cgpa)}</span></td>
+                      <td><span className={`class-${cgpaClass(parseFloat(s.cgpa))}`}>{cgpaLabel(parseFloat(s.cgpa))}</span></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
+      )}
+
+      {activeTab === 'courses' && (
+        <div className="card card-pad">
+          <div className="section-title">Average Score per Course</div>
+          {loading ? <Spinner /> : <CourseAvgChart data={courseStats} />}
+          <div className="divider"></div>
+          <div className="table-wrap">
+            <table className="lb-table">
+              <thead><tr><th>Code</th><th>Title</th><th>Units</th><th>Avg Score</th><th>Pass Rate</th><th>Semester</th></tr></thead>
+              <tbody>
+                {(courseStats||[]).map(c => (
+                  <tr key={c.code}>
+                    <td><span style={{ fontFamily: 'Syne', fontWeight: 700 }}>{c.code}</span></td>
+                    <td style={{ fontSize: 12, color: 'var(--text-2)' }}>{c.title}</td>
+                    <td style={{ color: 'var(--text-3)' }}>{c.credit_units}</td>
+                    <td>
+                      <span style={{ fontFamily: 'Syne', fontWeight: 700, color: parseFloat(c.avg_total) >= 50 ? 'var(--accent)' : 'var(--danger)' }}>
+                        {c.avg_total ? fmt(c.avg_total, 1) : '—'}%
+                      </span>
+                    </td>
+                    <td>
+                      {c.pass_count !== undefined ? (
+                        <div>
+                          <span style={{ fontFamily: 'Syne', fontWeight: 700 }}>{passRate(c)}%</span>
+                          <div className="insight-bar-wrap" style={{ width: 80, marginTop: 4 }}>
+                            <div className="insight-bar" style={{ width: `${passRate(c)}%` }}></div>
+                          </div>
+                        </div>
+                      ) : '—'}
+                    </td>
+                    <td style={{ color: 'var(--text-3)', fontSize: 12 }}>Sem {c.semester}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'distribution' && (
+        <div className="grid-2">
+          <div className="card card-pad">
+            <div className="section-title">CGPA Percentiles</div>
+            {(leaderboard||[]).length > 0 && (() => {
+              const sorted = [...(leaderboard||[])].map(s => parseFloat(s.cgpa)).sort((a,b)=>a-b);
+              const pct = (p) => sorted[Math.floor(sorted.length * p / 100)] || 0;
+              return [
+                { label: 'Top 10% threshold', val: pct(90) },
+                { label: 'Top 25% threshold', val: pct(75) },
+                { label: 'Median (50th)', val: pct(50) },
+                { label: 'Bottom 25%', val: pct(25) },
+              ].map(row => (
+                <div className="insight-row" key={row.label}>
+                  <div className="insight-label">{row.label}</div>
+                  <div className="insight-val">{fmt(row.val)}</div>
+                </div>
+              ));
+            })()}
+          </div>
+          <div className="card card-pad">
+            <div className="section-title">Quick Stats</div>
+            {(() => {
+              const vals = (leaderboard||[]).map(s => parseFloat(s.cgpa));
+              const max = Math.max(...vals);
+              const min = Math.min(...vals);
+              const avg = vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : 0;
+              const sd = vals.length ? Math.sqrt(vals.reduce((a,b)=>a+(b-avg)**2,0)/vals.length) : 0;
+              return [
+                { label: 'Highest CGPA', val: fmt(max) },
+                { label: 'Lowest CGPA', val: fmt(min) },
+                { label: 'Mean CGPA', val: fmt(avg) },
+                { label: 'Std Deviation', val: fmt(sd) },
+                { label: 'Range', val: fmt(max - min) },
+              ].map(row => (
+                <div className="insight-row" key={row.label}>
+                  <div className="insight-label">{row.label}</div>
+                  <div className="insight-val">{row.val}</div>
+                </div>
+              ));
+            })()}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Course Leaderboard Page ──────────────────────────────────────────────
+function CourseLbPage({ courseStats, loading, onSelectStudent, leaderboard }) {
+  const [selectedCourse, setSelectedCourse] = useState(null);
+  const [courseStudents, setCourseStudents] = useState([]);
+
+  const loadCourse = (code) => {
+    setSelectedCourse(code);
+    // Build leaderboard client-side — no extra endpoint needed
+    setCourseStudents(buildCourseLb(leaderboard, code));
+  };
+
+  return (
+    <div className="main fade-in">
+      <div className="page-header">
+        <h1>Course Rankings</h1>
+        <p>Per-course leaderboards — best student in each subject</p>
+      </div>
+
+      <div className="grid-2">
+        <div className="card card-pad">
+          <div className="section-title">Select a Course</div>
+          {loading ? <Spinner /> : (courseStats||[]).map(c => (
+            <div
+              key={c.code}
+              className="insight-row"
+              style={{ cursor: 'pointer', background: selectedCourse === c.code ? 'var(--accent-light)' : '', borderRadius: 8, padding: '10px 8px', margin: '2px 0' }}
+              onClick={() => loadCourse(c.code)}
+            >
+              <div>
+                <div className="insight-label" style={{ fontFamily: 'Syne', fontWeight: 700 }}>{c.code}</div>
+                <div className="insight-sub">{c.title} · {c.credit_units} units</div>
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>Sem {c.semester} →</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="card card-pad">
+          {!selectedCourse ? (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200, color: 'var(--text-3)', flexDirection: 'column', gap: 8 }}>
+              <span style={{ fontSize: 32 }}>📚</span>
+              <span>Select a course to see rankings</span>
+            </div>
+          ) : (
+            <>
+              <div className="section-title">{selectedCourse} Rankings</div>
+              {courseStudents.length === 0 ? (
+                <div style={{ color: 'var(--text-3)', textAlign: 'center', padding: 40 }}>No data for this course yet</div>
+              ) : courseStudents.slice(0, 20).map((s, i) => (
+                <div key={s.matric_no} className="course-lb-item" style={{ cursor: 'pointer' }} onClick={() => onSelectStudent(s.matric_no)}>
+                  <span className="course-rank-num">#{i+1}</span>
+                  <div style={{ flex: 1 }}>
+                    <div className="course-lb-name">{s.name}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{s.matric_no}</div>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div className="course-lb-score">{s.total_score || '—'}</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-3)' }}>{s.grade || '—'}</div>
+                  </div>
+                </div>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Root App ────────────────────────────────────────────────────────────
+function App() {
+  const [page, setPage] = useState('leaderboard');
+  const [selectedMatric, setSelectedMatric] = useState(null);
+
+  const [leaderboard, setLeaderboard] = useState([]);
+  const [courseStats, setCourseStats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    setLoading(true);
+    // GET /leaderboard returns { leaderboard: [...] } — fetchLeaderboard unwraps it
+    fetchLeaderboard()
+      .then(lb => {
+        setLeaderboard(lb);
+        // Build course stats client-side — no separate endpoint needed
+        setCourseStats(buildCourseStats(lb));
+        setLoading(false);
+      })
+      .catch(e => {
+        setError(e.message);
+        setLeaderboard(DEMO_LB);
+        setCourseStats(buildCourseStats(DEMO_LB));
+        setLoading(false);
+      });
+  }, []);
+
+  const handleSelectStudent = (matric) => {
+    setSelectedMatric(matric);
+    setPage('profile');
+  };
+
+  const nav = [
+    { id: 'leaderboard', icon: '🏆', label: 'Leaderboard' },
+    { id: 'analytics', icon: '📊', label: 'Analytics' },
+    { id: 'courses', icon: '📚', label: 'Course Rankings' },
+  ];
+
+  return (
+    <div className="app">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="sidebar-logo">
+          <div className="dept">CS Tracker</div>
+          <div className="sub">Academic Performance System</div>
+          <div className="badge-100">🎓 100 Level · 2025/2026</div>
+        </div>
+
+        <div className="nav-section">Views</div>
+        {nav.map(n => (
+          <div
+            key={n.id}
+            className={`nav-item ${page === n.id && !selectedMatric ? 'active' : ''}`}
+            onClick={() => { setPage(n.id); setSelectedMatric(null); }}
+          >
+            <span className="nav-icon">{n.icon}</span>
+            {n.label}
+          </div>
+        ))}
+
+        <div className="sidebar-bottom">
+          <div className="data-pill">
+            <strong>{loading ? '…' : leaderboard.length}</strong>
+            students indexed
+          </div>
+        </div>
+      </aside>
+
+      {/* Content */}
+      {page === 'profile' && selectedMatric ? (
+        <StudentProfile
+          matric={selectedMatric}
+          leaderboard={leaderboard}
+          onBack={() => { setSelectedMatric(null); setPage('leaderboard'); }}
+        />
+      ) : page === 'analytics' ? (
+        <AnalyticsPage leaderboard={leaderboard} loading={loading} courseStats={courseStats} />
+      ) : page === 'courses' ? (
+        <CourseLbPage courseStats={courseStats} loading={loading} onSelectStudent={handleSelectStudent} leaderboard={leaderboard} />
+      ) : (
+        <LeaderboardPage leaderboard={leaderboard} loading={loading} error={error} onSelect={handleSelectStudent} />
+      )}
+    </div>
+  );
+}
+
+// ─── Demo data (shown when API is offline) ───────────────────────────────
+const DEMO_LB = Array.from({ length: 20 }, (_, i) => ({
+  matric_no: `25190100${String(i+1).padStart(1,'0')}`,
+  name: ['OJEKUNLE David Damilare','ADEYEMI Folake','IBRAHIM Musa Tunde','OKONKWO Chisom','BELLO Fatima Zahra','ADEOLA Seun','NWOSU Emeka','HASSAN Aisha','ADEBAYO Tunde','OSEI Kwame Asante','IBRAHIM Fatima','ADEKUNLE Bola','NDUKA Chidera','FASHOLA Segun','OKAFOR Nnamdi','BELLO Amina','CHUKWU Eze','ADELEKE Sade','NWACHUKWU Ugo','OLAWALE Kemi'][i],
+  cgpa: (5 - i * 0.18).toFixed(2),
+  rank: i + 1,
+  courses_taken: Math.floor(Math.random() * 3) + 6,
+  total_units: 16,
+}));
+
+// DEMO_COURSES is computed dynamically from DEMO_LB via buildCourseStats(DEMO_LB) — no static list needed
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
