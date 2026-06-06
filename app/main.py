@@ -42,7 +42,12 @@ class SessionCorrectionRequest(BaseModel):
     current_session: str
     new_session: str
     matric_nos: Optional[list[str]] = None
+    matric_numbers: Optional[list[str]] = None
     course_codes: Optional[list[str]] = None
+
+class DeleteStudentsRequest(BaseModel):
+    matric_nos: Optional[list[str]] = None
+    matric_numbers: Optional[list[str]] = None
 
 # ─────────────────────────────────────────
 # INGEST: Upload PDF
@@ -437,8 +442,9 @@ def update_student_result(
 def correct_result_session(payload: SessionCorrectionRequest, db: Session = Depends(get_db)):
     query = db.query(Result).filter(Result.session == payload.current_session)
 
-    if payload.matric_nos:
-        query = query.filter(Result.matric_no.in_(payload.matric_nos))
+    matric_nos = payload.matric_nos or payload.matric_numbers
+    if matric_nos:
+        query = query.filter(Result.matric_no.in_(matric_nos))
     if payload.course_codes:
         query = query.filter(Result.course_code.in_([code.upper() for code in payload.course_codes]))
 
@@ -449,8 +455,23 @@ def correct_result_session(payload: SessionCorrectionRequest, db: Session = Depe
         "message": f"Updated {updated} result record(s)",
         "current_session": payload.current_session,
         "new_session": payload.new_session,
-        "matric_nos": payload.matric_nos or [],
+        "matric_nos": matric_nos or [],
         "course_codes": payload.course_codes or []
+    }
+
+@app.post("/student/remove")
+def remove_students(payload: DeleteStudentsRequest, db: Session = Depends(get_db)):
+    matric_nos = payload.matric_nos or payload.matric_numbers
+    if not matric_nos:
+        raise HTTPException(status_code=400, detail="Provide matric_nos or matric_numbers")
+
+    deleted_results = db.query(Result).filter(Result.matric_no.in_(matric_nos)).delete(synchronize_session=False)
+    deleted_students = db.query(Student).filter(Student.matric_no.in_(matric_nos)).delete(synchronize_session=False)
+    db.commit()
+
+    return {
+        "message": f"Deleted {deleted_students} students and {deleted_results} result record(s)",
+        "matric_nos": matric_nos
     }
 
 @app.delete("/result/course")
