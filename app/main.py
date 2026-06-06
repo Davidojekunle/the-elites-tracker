@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
-import tempfile, os
+import tempfile, os, json
 
 from app.database import get_db, init_db, Student, Course, Result
 from app.grades import get_grade, compute_cgpa
@@ -100,7 +100,15 @@ def ingest_scraped(
     """
     records = []
     for row in payload:
-        total = float(row.get("total_score", 0))
+        total = row.get("total_score")
+        if total is None:
+            ca = row.get("ca_score")
+            exam = row.get("exam_score")
+            if ca is not None and exam is not None:
+                total = float(ca) + float(exam)
+        if total is None:
+            raise HTTPException(status_code=400, detail="Each row must include total_score or both ca_score and exam_score.")
+        total = float(total)
         grade, grade_point = get_grade(total)
         records.append({
             **row,
@@ -111,6 +119,57 @@ def ingest_scraped(
         })
     saved = _save_records(records, db)
     return {"message": f"Ingested {saved} scraped records"}
+
+
+@app.post("/ingest/bulk-json")
+async def ingest_bulk_json(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """Upload a JSON file containing a list of result records."""
+    content = await file.read()
+    try:
+        payload = json.loads(content)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Invalid JSON file")
+
+    if not isinstance(payload, list):
+        raise HTTPException(status_code=400, detail="JSON must be an array of records")
+
+    records = []
+    for row in payload:
+        if not isinstance(row, dict):
+            continue
+        course_code = row.get("course_code")
+        session = row.get("session")
+        if not course_code or not session:
+            raise HTTPException(status_code=400, detail="Each record must include course_code and session")
+
+        total = row.get("total_score")
+        if total is None:
+            ca = row.get("ca_score")
+            exam = row.get("exam_score")
+            if ca is not None and exam is not None:
+                total = float(ca) + float(exam)
+
+        if total is None:
+            raise HTTPException(status_code=400, detail="Each record must include total_score or both ca_score and exam_score")
+
+        grade, grade_point = get_grade(float(total))
+        records.append({
+            "matric_no": row.get("matric_no"),
+            "name": row.get("name"),
+            "ca_score": row.get("ca_score"),
+            "exam_score": row.get("exam_score"),
+            "total_score": float(total),
+            "grade": grade,
+            "grade_point": grade_point,
+            "course_code": course_code.upper(),
+            "session": session,
+        })
+
+    saved = _save_records(records, db)
+    return {"message": f"Ingested {saved} records from JSON file"}
 
 
 # ─────────────────────────────────────────
@@ -134,8 +193,9 @@ def leaderboard(
         course_query = course_query.filter_by(semester=semester)
     courses = {c.code: c for c in course_query.all()}
 
-    # Get all students (25190 prefix)
-    students = db.query(Student).filter(Student.matric_no.like("25190%")).all()
+    # Get all students with results for this session
+    students = db.query(Student).join(Result, Student.matric_no == Result.matric_no)
+    students = students.filter(Result.session == session).distinct().all()
 
     leaderboard_data = []
 
