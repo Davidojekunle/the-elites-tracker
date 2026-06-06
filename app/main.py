@@ -37,6 +37,13 @@ class UpdateScoreRequest(BaseModel):
     ca_score: Optional[float] = None
     exam_score: Optional[float] = None
     total_score: Optional[float] = None
+
+class SessionCorrectionRequest(BaseModel):
+    current_session: str
+    new_session: str
+    matric_nos: Optional[list[str]] = None
+    course_codes: Optional[list[str]] = None
+
 # ─────────────────────────────────────────
 # INGEST: Upload PDF
 # ─────────────────────────────────────────
@@ -424,6 +431,26 @@ def update_student_result(
             "grade": result.grade,
             "grade_point": result.grade_point,
         }
+    }
+
+@app.post("/result/correct-session")
+def correct_result_session(payload: SessionCorrectionRequest, db: Session = Depends(get_db)):
+    query = db.query(Result).filter(Result.session == payload.current_session)
+
+    if payload.matric_nos:
+        query = query.filter(Result.matric_no.in_(payload.matric_nos))
+    if payload.course_codes:
+        query = query.filter(Result.course_code.in_([code.upper() for code in payload.course_codes]))
+
+    updated = query.update({Result.session: payload.new_session}, synchronize_session=False)
+    db.commit()
+
+    return {
+        "message": f"Updated {updated} result record(s)",
+        "current_session": payload.current_session,
+        "new_session": payload.new_session,
+        "matric_nos": payload.matric_nos or [],
+        "course_codes": payload.course_codes or []
     }
 
 @app.delete("/result/course")
